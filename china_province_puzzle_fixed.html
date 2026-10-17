@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#101b35" />
+<title>中国省级行政区拼图挑战</title>
+<style>
+  :root {
+    --bg: #0b1224;
+    --panel: rgba(18, 29, 54, .88);
+    --panel-2: rgba(25, 39, 69, .9);
+    --line: rgba(159, 183, 230, .19);
+    --text: #eef4ff;
+    --muted: #9eafd0;
+    --cyan: #72e1e7;
+    --blue: #83a9ff;
+    --green: #65e0b2;
+    --coral: #ff8c9a;
+    --cell: clamp(39px, 4.15vw, 56px);
+  }
+  * { box-sizing: border-box; }
+  html { min-height: 100%; background: var(--bg); }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background:
+      radial-gradient(ellipse at 13% 3%, rgba(72, 117, 219, .23), transparent 35%),
+      radial-gradient(ellipse at 90% 35%, rgba(42, 197, 196, .11), transparent 31%),
+      linear-gradient(145deg, #0a1225, #0e1830 58%, #101a31);
+  }
+  button { font: inherit; }
+  .app { max-width: 1500px; margin: 0 auto; padding: 24px clamp(14px, 2.5vw, 34px) 30px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+  .brand { display: flex; gap: 12px; align-items: center; min-width: 0; }
+  .brand-mark { width: 45px; height: 45px; border-radius: 14px; display: grid; place-items: center; flex: 0 0 auto;
+    color: #07152b; font-weight: 900; font-size: 22px; background: linear-gradient(135deg, var(--cyan), #9aaeff); box-shadow: 0 7px 26px rgba(114,225,231,.17); }
+  .brand-copy small { display: block; color: var(--cyan); font-size: 10px; letter-spacing: .19em; font-weight: 800; margin-bottom: 5px; }
+  .brand-copy strong { font-size: 15px; letter-spacing: .03em; }
+  .top-tag { border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 999px; padding: 8px 12px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+  .eyebrow { display:flex; align-items:center; gap:8px; color: var(--cyan); text-transform: uppercase; font-size: 11px; letter-spacing: .14em; font-weight: 800; margin-bottom: 10px; }
+  .pulse { height: 7px; width: 7px; display: inline-block; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 5px rgba(101,224,178,.09); }
+  h1 { font-size: clamp(27px, 3.2vw, 43px); line-height: 1.12; margin: 0 0 11px; font-weight: 850; letter-spacing: -.035em; }
+  h1 .accent { color: var(--cyan); }
+  .intro { max-width: 760px; color: #aebcdc; font-size: 14px; line-height: 1.8; margin: 0; }
+  .hero-note { max-width: 255px; flex: 0 0 auto; padding: 13px 15px; background: rgba(114,225,231,.055); border: 1px solid rgba(114,225,231,.2); border-radius: 15px; color: #b9d6e4; font-size: 12px; line-height: 1.65; }
+  .hero-note b { color: #e7fbff; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 17px; }
+  .stat { border: 1px solid var(--line); background: rgba(18,29,54,.63); border-radius: 15px; padding: 13px 15px; min-width: 0; }
+  .stat-label { color: var(--muted); font-size: 11px; margin-bottom: 7px; }
+  .stat-value { font-size: 21px; line-height: 1.15; font-weight: 800; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+  .stat-value span { color: #7e91b6; font-size: 12px; font-weight: 600; letter-spacing: 0; }
+  .progress-track { width: 100%; height: 4px; margin-top: 10px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; }
+  .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--green)); border-radius: inherit; transition: width .35s ease; }
+  .workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(300px, .92fr); gap: 16px; align-items: start; }
+  .panel { border: 1px solid var(--line); background: var(--panel); border-radius: 22px; box-shadow: 0 18px 60px rgba(0,0,0,.12); overflow: hidden; min-width: 0; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px 14px; border-bottom: 1px solid rgba(159,183,230,.12); }
+  .panel-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .panel-icon { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: rgba(114,225,231,.09); color: var(--cyan); font-size: 17px; flex: 0 0 auto; }
+  .panel-title strong { display: block; font-size: 14px; }
+  .panel-title small { display: block; color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .tiny-badge { color: #a8f5df; background: rgba(101,224,178,.09); border: 1px solid rgba(101,224,178,.2); border-radius: 999px; padding: 6px 9px; font-size: 10px; white-space: nowrap; }
+  .map-wrap { padding: 20px 12px 15px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-color: rgba(131,169,255,.4) transparent; }
+  .map-grid { display: grid; grid-template-columns: repeat(12, var(--cell)); grid-template-rows: repeat(10, var(--cell)); gap: 4px; width: max-content; margin: 0 auto; position: relative; padding: 8px; border-radius: 16px; background: radial-gradient(ellipse at 48% 45%, rgba(65,112,170,.18), rgba(25,45,79,.10) 58%, transparent 75%); }
+  .slot { width: var(--cell); height: var(--cell); min-width: 0; min-height: 0; border: 1px dashed rgba(159,190,245,.72); border-radius: 11px; background: rgba(112,139,192,.16); display: grid; place-items: center; position: relative; transition: background .18s, border-color .18s, transform .18s; box-shadow: inset 0 0 0 1px rgba(255,255,255,.025); }
+  .slot::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: rgba(157,195,255,.72); box-shadow: 0 0 10px rgba(114,225,231,.20); }
+  .slot:hover { border-color: rgba(114,225,231,.75); background: rgba(114,225,231,.1); }
+  .slot.filled { border: 1px solid rgba(101,224,178,.48); background: rgba(101,224,178,.09); }
+  .slot.filled::before { display: none; }
+  .slot.hinting { border: 2px solid var(--cyan); background: rgba(114,225,231,.2); box-shadow: 0 0 0 4px rgba(114,225,231,.08), 0 0 24px rgba(114,225,231,.22); animation: hintPulse .7s ease-in-out infinite alternate; z-index: 2; }
+  .slot.wrong { border-color: var(--coral); background: rgba(255,140,154,.15); animation: wrongShake .25s linear; }
+  @keyframes hintPulse { from { transform: scale(.97); } to { transform: scale(1.05); } }
+  @keyframes wrongShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+  .map-foot { display:flex; justify-content:space-between; align-items:center; gap: 12px; padding: 0 20px 17px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+  .legend { display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .legend-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green); }
+  .message { margin: 0 16px 16px; min-height: 44px; display:flex; align-items:center; gap:10px; padding: 11px 13px; background: rgba(131,169,255,.075); border: 1px solid rgba(131,169,255,.15); border-radius: 12px; color: #c8d7f3; font-size: 12px; line-height: 1.55; }
+  .message.error { background: rgba(255,140,154,.075); border-color: rgba(255,140,154,.2); color: #ffd0d6; }
+  .message.good { background: rgba(101,224,178,.075); border-color: rgba(101,224,178,.2); color: #bbf7e5; }
+  .message-icon { font-weight: 900; font-size: 16px; flex: 0 0 auto; }
+  .tray-head { align-items:flex-start; }
+  .tray-tools { display:flex; gap:7px; }
+  .icon-btn { color:#c8d7f3; border:1px solid var(--line); background:rgba(255,255,255,.035); width:34px; height:34px; border-radius:10px; display:grid; place-items:center; cursor:pointer; transition:.2s; }
+  .icon-btn:hover { border-color:rgba(114,225,231,.45); color:var(--cyan); transform:translateY(-1px); }
+  .filters { display:flex; flex-wrap:wrap; gap:7px; padding: 14px 16px 8px; }
+  .filter { cursor:pointer; border:1px solid var(--line); background:rgba(255,255,255,.025); color:#9eafd0; padding:7px 10px; border-radius:999px; font-size:11px; transition:.18s; }
+  .filter:hover { border-color:rgba(114,225,231,.35); color:#d6faff; }
+  .filter.active { border-color:rgba(114,225,231,.5); color:#dffcff; background:rgba(114,225,231,.12); }
+  .tray-meta { display:flex; align-items:center; justify-content:space-between; padding: 8px 17px 10px; color:var(--muted); font-size:11px; }
+  .tray { padding: 0 14px 17px; display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:8px; max-height: 470px; overflow-y:auto; scrollbar-color:rgba(131,169,255,.4) transparent; overscroll-behavior:contain; }
+  .tile { min-height: 56px; width:100%; display:flex; align-items:center; gap:9px; padding:9px 10px; text-align:left; color:var(--text); cursor:grab; border:1px solid rgba(147,170,219,.19); border-radius:13px; background:linear-gradient(140deg, rgba(35,51,84,.93), rgba(25,39,66,.9)); position:relative; user-select:none; touch-action:pan-y; transition: border-color .16s, background .16s, box-shadow .16s, transform .16s; }
+  .tile:hover { border-color:rgba(114,225,231,.43); background:linear-gradient(140deg, rgba(42,65,102,.95), rgba(28,48,79,.95)); transform:translateY(-1px); }
+  .tile:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
+  .tile.selected { border-color:var(--cyan); background:rgba(114,225,231,.15); box-shadow:0 0 0 2px rgba(114,225,231,.1); }
+  .tile.placed { cursor:default; min-height:0; height:100%; width:100%; border:0; border-radius:9px; padding:3px 1px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:2px; background:transparent; box-shadow:none; transform:none; color:#d8ffef; text-align:center; overflow:hidden; }
+  .tile.placed .tile-type { font-size:8px; color:#91dabe; opacity:.95; }
+  .tile.dragging { position:fixed !important; z-index:10000; width:var(--drag-width) !important; height:var(--drag-height) !important; opacity:.96; pointer-events:none; box-shadow:0 18px 35px rgba(0,0,0,.35); transform:rotate(-2deg) scale(1.03); cursor:grabbing; touch-action:none; }
+  .tile-placeholder { min-height:56px; border:1px dashed rgba(114,225,231,.25); border-radius:13px; background:rgba(114,225,231,.035); }
+  .tile-symbol { width:28px; height:28px; flex:0 0 28px; border-radius:9px; display:grid; place-items:center; font-size:11px; font-weight:850; color:#8be8ee; background:rgba(114,225,231,.09); border:1px solid rgba(114,225,231,.14); }
+  .tile-text { min-width:0; display:flex; flex-direction:column; gap:4px; }
+  .tile-name { display:block; font-size:12px; font-weight:750; line-height:1.15; white-space:nowrap; }
+  .tile-type { display:block; font-size:9px; line-height:1.2; color:#94a7cb; white-space:nowrap; }
+  .tray-empty { display:none; padding:24px 10px; text-align:center; color:var(--muted); font-size:12px; line-height:1.7; grid-column:1 / -1; }
+  .bottom-actions { padding: 0 16px 17px; display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+  .btn { min-height:42px; padding:10px 13px; border-radius:12px; border:1px solid var(--line); color:#dce8ff; background:rgba(255,255,255,.04); font-size:12px; font-weight:700; cursor:pointer; transition:.18s; }
+  .btn:hover { border-color:rgba(114,225,231,.42); transform:translateY(-1px); }
+  .btn.primary { color:#07192a; background:linear-gradient(105deg, var(--cyan), #a5f1da); border-color:transparent; }
+  .btn.primary:hover { filter:brightness(1.05); }
+  .success-banner { display:none; align-items:center; gap:12px; margin:0 16px 17px; padding:13px; border-radius:13px; background:linear-gradient(110deg, rgba(101,224,178,.15), rgba(114,225,231,.09)); border:1px solid rgba(101,224,178,.28); }
+  .success-banner.show { display:flex; }
+  .trophy { font-size:24px; }
+  .success-banner strong { display:block; font-size:13px; color:#c8ffeb; }
+  .success-banner small { display:block; color:#a6d8ca; font-size:11px; margin-top:4px; line-height:1.5; }
+  .footer { display:flex; justify-content:space-between; gap:16px; margin-top:15px; padding:0 3px; color:#6f82a8; font-size:10px; line-height:1.65; }
+  .footer strong { color:#92a5c9; font-weight:700; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  @media (max-width: 950px) {
+    .hero { align-items:flex-start; }
+    .hero-note { max-width:220px; }
+    .workspace { grid-template-columns:minmax(0, 1fr); }
+    .tray { grid-template-columns:repeat(3,minmax(0,1fr)); max-height:340px; }
+    .tile { min-height:51px; }
+    .tile-placeholder { min-height:51px; }
+  }
+  @media (max-width: 600px) {
+    .app { padding:15px 10px 22px; }
+    .topbar { margin-bottom:20px; }
+    .top-tag { font-size:10px; padding:7px 9px; }
+    .brand-mark { width:39px;height:39px; }
+    .brand-copy strong { font-size:13px; }
+    .hero { display:block; margin-bottom:16px; }
+    .hero-note { max-width:none; margin-top:14px; }
+    h1 { font-size:29px; }
+    .intro { font-size:12px; }
+    .stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .stat { padding:11px 12px; }
+    .stat-value { font-size:19px; }
+    .panel { border-radius:17px; }
+    .panel-head { padding:14px 13px 12px; }
+    .map-wrap { padding:16px 8px 12px; }
+    .map-grid { --cell: 39px; gap:3px; }
+    .slot { border-radius:8px; }
+    .tile.placed { font-size:10px; }
+    .tile-name { font-size:11px; }
+    .map-foot { padding:0 13px 13px; font-size:10px; }
+    .message { margin:0 10px 12px; }
+    .tray { grid-template-columns:repeat(2,minmax(0,1fr)); padding:0 10px 13px; gap:7px; max-height:330px; }
+    .filters { padding:12px 10px 7px; }
+    .tray-meta { padding:8px 11px; }
+    .tile { min-height:50px; padding:7px 8px; }
+    .tile-placeholder { min-height:50px; }
+    .bottom-actions { padding:0 10px 13px; }
+    .footer { display:block; }
+    .footer span { display:block; margin-bottom:4px; }
+  }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">中</div>
+      <div class="brand-copy"><small>GEOGRAPHY · CLASSROOM LAB</small><strong>中国地理互动实验室</strong></div>
+    </div>
+    <div class="top-tag">八年级 · 中国行政区划</div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow"><span class="pulse"></span> MAP PUZZLE · LEVEL 01</div>
+      <h1>把中国拼完整<span class="accent">。</span></h1>
+      <p class="intro">将右侧的省级行政区拖到地图上对应的位置。放对后会自动归位；也可以先点选一块拼图，再点击地图位置。试试看，你能一次拼出完整的中国吗？</p>
+    </div>
+    <div class="hero-note"><b>闯关目标</b><br>完成全部 34 个省级行政区：23 个省、5 个自治区、4 个直辖市和香港、澳门特别行政区。台湾也在拼图中。</div>
+  </section>
+
+  <section class="stats" aria-label="游戏统计">
+    <div class="stat"><div class="stat-label">拼图进度</div><div class="stat-value"><span id="placedCount">0</span><span> / 34 个</span></div><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div></div>
+    <div class="stat"><div class="stat-label">累计失误</div><div class="stat-value" id="mistakeCount">0</div></div>
+    <div class="stat"><div class="stat-label">已用时间</div><div class="stat-value" id="timeCount">00:00</div></div>
+    <div class="stat"><div class="stat-label">使用提示</div><div class="stat-value" id="hintCount">0</div></div>
+  </section>
+
+  <main class="workspace">
+    <section class="panel map-panel" aria-label="中国省级行政区拼图地图">
+      <div class="panel-head">
+        <div class="panel-title"><div class="panel-icon" aria-hidden="true">⌖</div><div><strong>拼图地图</strong><small>蓝色虚线格是可放置的位置</small></div></div>
+        <div class="tiny-badge">34 个位置</div>
+      </div>
+      <div class="map-wrap"><div class="map-grid" id="mapGrid" aria-label="省级行政区拼图区域"></div></div>
+      <div class="map-foot"><span>提示：蓝色虚线格代表省级行政区的大致位置，并非真实省界轮廓。</span><span class="legend"><i class="legend-dot"></i> 已正确归位</span></div>
+      <div class="message" id="message" aria-live="polite"><span class="message-icon" id="messageIcon">✦</span><span id="messageText">选择一块拼图开始吧。拖放或点选都可以。</span></div>
+    </section>
+
+    <aside class="panel tray-panel" aria-label="待放置拼图">
+      <div class="panel-head tray-head">
+        <div class="panel-title"><div class="panel-icon" aria-hidden="true">▦</div><div><strong>待放置拼图</strong><small>拖动到地图，或先点选再点地图</small></div></div>
+        <div class="tray-tools"><button class="icon-btn" id="shuffleBtn" title="打乱剩余拼图" aria-label="打乱剩余拼图">⤨</button></div>
+      </div>
+      <div class="filters" id="filters" aria-label="按行政区类别筛选">
+        <button class="filter active" data-filter="all">全部</button>
+        <button class="filter" data-filter="province">省</button>
+        <button class="filter" data-filter="autonomous">自治区</button>
+        <button class="filter" data-filter="municipality">直辖市</button>
+        <button class="filter" data-filter="sar">特别行政区</button>
+      </div>
+      <div class="tray-meta"><span id="remainingText">还剩 34 块</span><span>顺序已打乱</span></div>
+      <div class="tray" id="tray"></div>
+      <div class="tray-empty" id="trayEmpty">这个类别的拼图都已归位啦。<br>试试其他类别，或使用“全部”。</div>
+      <div class="success-banner" id="successBanner"><div class="trophy">🏆</div><div><strong>中国地图拼完整了！</strong><small id="successDetail">太棒了，你完成了全部 34 个位置。</small></div></div>
+      <div class="bottom-actions"><button class="btn" id="hintBtn">✧ 给我一个提示</button><button class="btn primary" id="resetBtn">↻ 重新开始</button></div>
+    </aside>
+  </main>
+
+  <footer class="footer"><span><strong>课堂玩法：</strong>可个人挑战，也可小组轮流上台拼图。</span><span>说明：地图采用相对方位示意布局，不按真实行政边界和面积比例绘制。</span></footer>
+</div>
+<script>
+(() => {
+  'use strict';
+  // Position grid is a simplified geographic tile map, not to scale.
+  const ADMIN = [
+    {id:'heilongjiang',name:'黑龙江',type:'province',typeName:'省',row:0,col:9},
+    {id:'jilin',name:'吉林',type:'province',typeName:'省',row:1,col:9},
+    {id:'inner-mongolia',name:'内蒙古',type:'autonomous',typeName:'自治区',row:2,col:4},
+    {id:'liaoning',name:'辽宁',type:'province',typeName:'省',row:2,col:8},
+    {id:'xinjiang',name:'新疆',type:'autonomous',typeName:'自治区',row:3,col:0},
+    {id:'gansu',name:'甘肃',type:'province',typeName:'省',row:3,col:2},
+    {id:'hebei',name:'河北',type:'province',typeName:'省',row:3,col:6},
+    {id:'beijing',name:'北京',type:'municipality',typeName:'直辖市',row:3,col:7},
+    {id:'qinghai',name:'青海',type:'province',typeName:'省',row:4,col:2},
+    {id:'ningxia',name:'宁夏',type:'autonomous',typeName:'自治区',row:4,col:3},
+    {id:'shanxi',name:'山西',type:'province',typeName:'省',row:4,col:5},
+    {id:'tianjin',name:'天津',type:'municipality',typeName:'直辖市',row:4,col:7},
+    {id:'shandong',name:'山东',type:'province',typeName:'省',row:4,col:8},
+    {id:'shaanxi',name:'陕西',type:'province',typeName:'省',row:5,col:3},
+    {id:'henan',name:'河南',type:'province',typeName:'省',row:5,col:5},
+    {id:'jiangsu',name:'江苏',type:'province',typeName:'省',row:5,col:7},
+    {id:'tibet',name:'西藏',type:'autonomous',typeName:'自治区',row:6,col:1},
+    {id:'sichuan',name:'四川',type:'province',typeName:'省',row:6,col:3},
+    {id:'chongqing',name:'重庆',type:'municipality',typeName:'直辖市',row:6,col:5},
+    {id:'hubei',name:'湖北',type:'province',typeName:'省',row:6,col:6},
+    {id:'anhui',name:'安徽',type:'province',typeName:'省',row:6,col:7},
+    {id:'shanghai',name:'上海',type:'municipality',typeName:'直辖市',row:6,col:8},
+    {id:'yunnan',name:'云南',type:'province',typeName:'省',row:7,col:2},
+    {id:'guizhou',name:'贵州',type:'province',typeName:'省',row:7,col:4},
+    {id:'hunan',name:'湖南',type:'province',typeName:'省',row:7,col:5},
+    {id:'jiangxi',name:'江西',type:'province',typeName:'省',row:7,col:7},
+    {id:'zhejiang',name:'浙江',type:'province',typeName:'省',row:7,col:8},
+    {id:'guangxi',name:'广西',type:'autonomous',typeName:'自治区',row:8,col:4},
+    {id:'guangdong',name:'广东',type:'province',typeName:'省',row:8,col:6},
+    {id:'fujian',name:'福建',type:'province',typeName:'省',row:8,col:8},
+    {id:'taiwan',name:'台湾',type:'province',typeName:'省',row:8,col:10},
+    {id:'hainan',name:'海南',type:'province',typeName:'省',row:9,col:5},
+    {id:'macao',name:'澳门',type:'sar',typeName:'特别行政区',row:9,col:6},
+    {id:'hong-kong',name:'香港',type:'sar',typeName:'特别行政区',row:9,col:7}
+  ];
+  const TYPE_LABEL = {province:'省', autonomous:'自治区', municipality:'直辖市', sar:'特别行政区'};
+  const mapGrid = document.getElementById('mapGrid');
+  const tray = document.getElementById('tray');
+  const message = document.getElementById('message');
+  const messageText = document.getElementById('messageText');
+  const messageIcon = document.getElementById('messageIcon');
+  const remainingText = document.getElementById('remainingText');
+  const trayEmpty = document.getElementById('trayEmpty');
+  let selectedTile = null;
+  let activeFilter = 'all';
+  let mistakes = 0;
+  let hints = 0;
+  let seconds = 0;
+  let timerStarted = false;
+  let timerId = null;
+  let dragState = null;
+  let recentlyDraggedTile = null;
+
+  const shuffle = (items) => {
+    const a = [...items];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+  const regionById = (id) => ADMIN.find(item => item.id === id);
+  const slotById = (id) => mapGrid.querySelector('.slot[data-id="' + id + '"]');
+  const startTimer = () => {
+    if (timerStarted) return;
+    timerStarted = true;
+    timerId = window.setInterval(() => {
+      seconds += 1;
+      const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const ss = String(seconds % 60).padStart(2, '0');
+      document.getElementById('timeCount').textContent = mm + ':' + ss;
+    }, 1000);
+  };
+  const setMessage = (text, kind = 'normal') => {
+    message.className = 'message' + (kind === 'error' ? ' error' : kind === 'good' ? ' good' : '');
+    messageIcon.textContent = kind === 'error' ? '!' : kind === 'good' ? '✓' : '✦';
+    messageText.textContent = text;
+  };
+  const makeTile = (region) => {
+    const tile = document.createElement('button');
+    tile.type = 'button';
+    tile.className = 'tile';
+    tile.dataset.id = region.id;
+    tile.dataset.type = region.type;
+    tile.setAttribute('aria-label', region.name + '，' + region.typeName + '，拼图块');
+    tile.innerHTML = '<span class="tile-symbol" aria-hidden="true">' + region.name.slice(0, 1) + '</span><span class="tile-text"><span class="tile-name">' + region.name + '</span><span class="tile-type">' + region.typeName + '</span></span>';
+    tile.addEventListener('click', () => {
+      if (tile.classList.contains('placed')) return;
+      if (recentlyDraggedTile === tile && Date.now() - tile._lastDragEnd < 350) return;
+      if (selectedTile && selectedTile !== tile) selectedTile.classList.remove('selected');
+      selectedTile = selectedTile === tile ? null : tile;
+      tile.classList.toggle('selected', selectedTile === tile);
+      if (selectedTile) setMessage('已选中「' + region.name + '」。现在点击地图上它应该在的位置，或直接拖动它。');
+      else setMessage('已取消选择。点选或拖动一块拼图开始。');
+    });
+    tile.addEventListener('pointerdown', (e) => {
+      // Touch screens use tap-to-select / tap-to-place so the tray remains scrollable.
+      if (e.pointerType === 'touch') return;
+      if (tile.classList.contains('placed') || e.button !== 0) return;
+      const rect = tile.getBoundingClientRect();
+      dragState = {tile, startX:e.clientX, startY:e.clientY, offsetX:e.clientX-rect.left, offsetY:e.clientY-rect.top, parent:tile.parentElement, placeholder:null, moved:false, width:rect.width, height:rect.height};
+    });
+    return tile;
+  };
+  const resetFloatingStyles = (tile) => {
+    tile.classList.remove('dragging');
+    tile.style.position = '';
+    tile.style.left = '';
+    tile.style.top = '';
+    tile.style.width = '';
+    tile.style.height = '';
+    tile.style.setProperty('--drag-width', '');
+    tile.style.setProperty('--drag-height', '');
+    tile.style.zIndex = '';
+    tile.style.pointerEvents = '';
+  };
+  const returnToTray = (tile, placeholder) => {
+    resetFloatingStyles(tile);
+    if (placeholder && placeholder.parentNode) {
+      placeholder.parentNode.insertBefore(tile, placeholder);
+      placeholder.remove();
+    } else if (!tray.contains(tile) && !tile.classList.contains('placed')) {
+      tray.appendChild(tile);
+    }
+    tile.classList.remove('selected');
+    applyFilter();
+  };
+  const updateStats = () => {
+    const placed = mapGrid.querySelectorAll('.slot.filled').length;
+    const remaining = ADMIN.length - placed;
+    document.getElementById('placedCount').textContent = placed;
+    document.getElementById('mistakeCount').textContent = mistakes;
+    document.getElementById('hintCount').textContent = hints;
+    document.getElementById('progressFill').style.width = (placed / ADMIN.length * 100) + '%';
+    remainingText.textContent = '还剩 ' + remaining + ' 块';
+    trayEmpty.style.display = tray.querySelectorAll('.tile:not(.placed):not([hidden])').length === 0 ? 'block' : 'none';
+    if (placed === ADMIN.length) {
+      if (timerId) window.clearInterval(timerId);
+      document.getElementById('successBanner').classList.add('show');
+      document.getElementById('successDetail').textContent = '用时 ' + document.getElementById('timeCount').textContent + ' · 失误 ' + mistakes + ' 次 · 提示 ' + hints + ' 次。';
+      setMessage('全部 34 个省级行政区都已归位，挑战完成！', 'good');
+    } else {
+      document.getElementById('successBanner').classList.remove('show');
+    }
+  };
+  const dropTile = (tile, slot, placeholder = null) => {
+    if (!tile || tile.classList.contains('placed')) return;
+    const region = regionById(tile.dataset.id);
+    const correct = slot && !slot.classList.contains('filled') && slot.dataset.id === tile.dataset.id;
+    if (correct) {
+      if (placeholder && placeholder.parentNode) placeholder.remove();
+      resetFloatingStyles(tile);
+      tile.classList.remove('selected');
+      if (selectedTile === tile) selectedTile = null;
+      slot.innerHTML = '';
+      slot.classList.add('filled');
+      tile.classList.add('placed');
+      tile.setAttribute('aria-label', region.name + '，已正确归位');
+      tile.querySelector('.tile-symbol')?.remove();
+      const name = tile.querySelector('.tile-name');
+      const type = tile.querySelector('.tile-type');
+      if (name) name.textContent = region.name;
+      if (type) type.textContent = region.typeName;
+      slot.appendChild(tile);
+      startTimer();
+      setMessage('正确！「' + region.name + '」已经归位，继续完成下一块。', 'good');
+      updateStats();
+    } else {
+      if (slot) {
+        slot.classList.remove('wrong');
+        void slot.offsetWidth;
+        slot.classList.add('wrong');
+        window.setTimeout(() => slot.classList.remove('wrong'), 500);
+      }
+      returnToTray(tile, placeholder);
+      if (selectedTile === tile) selectedTile = null;
+      mistakes += 1;
+      startTimer();
+      if (!slot) setMessage('还没放进地图位置里。试着把拼图拖到一个空位上。', 'error');
+      else if (slot.classList.contains('filled')) setMessage('这个位置已经有拼图了。找一个空位再试试。', 'error');
+      else setMessage('还差一点！「' + region.name + '」不在这个位置，观察一下周边省份再试。', 'error');
+      updateStats();
+    }
+  };
+  const buildBoard = () => {
+    mapGrid.innerHTML = '';
+    ADMIN.forEach(region => {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      slot.dataset.id = region.id;
+      slot.style.gridRow = String(region.row + 1);
+      slot.style.gridColumn = String(region.col + 1);
+      slot.setAttribute('role', 'button');
+      slot.setAttribute('tabindex', '0');
+      slot.setAttribute('aria-label', '省级行政区拼图空位');
+      slot.title = '空位';
+      slot.addEventListener('click', () => {
+        if (selectedTile && !selectedTile.classList.contains('placed')) dropTile(selectedTile, slot);
+      });
+      slot.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && selectedTile && !selectedTile.classList.contains('placed')) {
+          e.preventDefault(); dropTile(selectedTile, slot);
+        }
+      });
+      mapGrid.appendChild(slot);
+    });
+  };
+  const applyFilter = () => {
+    let visible = 0;
+    [...tray.querySelectorAll('.tile')].forEach(tile => {
+      const show = activeFilter === 'all' || tile.dataset.type === activeFilter;
+      tile.hidden = !show;
+      if (show && !tile.classList.contains('placed')) visible += 1;
+    });
+    document.querySelectorAll('.filter').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === activeFilter));
+    trayEmpty.style.display = visible === 0 ? 'block' : 'none';
+  };
+  const renderTray = () => {
+    tray.innerHTML = '';
+    shuffle(ADMIN).forEach(region => tray.appendChild(makeTile(region)));
+    applyFilter();
+  };
+  const initGame = () => {
+    if (timerId) window.clearInterval(timerId);
+    timerId = null; timerStarted = false; seconds = 0; mistakes = 0; hints = 0;
+    selectedTile = null; dragState = null; activeFilter = 'all'; recentlyDraggedTile = null;
+    document.getElementById('timeCount').textContent = '00:00';
+    buildBoard();
+    renderTray();
+    document.getElementById('successBanner').classList.remove('show');
+    setMessage('选择一块拼图开始吧。拖放或点选都可以。');
+    updateStats();
+  };
+
+  document.addEventListener('pointermove', (e) => {
+    if (!dragState) return;
+    const d = dragState;
+    if (!d.moved && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) > 7) {
+      d.moved = true;
+      const placeholder = document.createElement('div');
+      placeholder.className = 'tile-placeholder';
+      placeholder.style.width = d.width + 'px';
+      placeholder.style.height = d.height + 'px';
+      d.parent.insertBefore(placeholder, d.tile);
+      d.placeholder = placeholder;
+      d.tile.style.setProperty('--drag-width', d.width + 'px');
+      d.tile.style.setProperty('--drag-height', d.height + 'px');
+      d.tile.classList.add('dragging');
+      d.tile.style.left = (e.clientX - d.offsetX) + 'px';
+      d.tile.style.top = (e.clientY - d.offsetY) + 'px';
+    }
+    if (d.moved) {
+      e.preventDefault();
+      d.tile.style.left = (e.clientX - d.offsetX) + 'px';
+      d.tile.style.top = (e.clientY - d.offsetY) + 'px';
+    }
+  }, {passive:false});
+  document.addEventListener('pointerup', (e) => {
+    if (!dragState) return;
+    const d = dragState;
+    dragState = null;
+    if (!d.moved) return;
+    recentlyDraggedTile = d.tile;
+    d.tile._lastDragEnd = Date.now();
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const slot = under ? under.closest('.slot') : null;
+    dropTile(d.tile, slot, d.placeholder);
+    window.setTimeout(() => { if (recentlyDraggedTile === d.tile) recentlyDraggedTile = null; }, 400);
+  });
+  document.addEventListener('pointercancel', () => {
+    if (!dragState) return;
+    const d = dragState; dragState = null;
+    if (d.moved) returnToTray(d.tile, d.placeholder);
+  });
+  document.getElementById('filters').addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter');
+    if (!btn) return;
+    if (selectedTile) selectedTile.classList.remove('selected');
+    selectedTile = null;
+    activeFilter = btn.dataset.filter;
+    applyFilter();
+  });
+  document.getElementById('shuffleBtn').addEventListener('click', () => {
+    const remaining = [...tray.children].filter(tile => !tile.classList.contains('placed'));
+    shuffle(remaining).forEach(tile => tray.appendChild(tile));
+    setMessage('剩余拼图已经重新打乱，继续挑战吧。');
+  });
+  document.getElementById('hintBtn').addEventListener('click', () => {
+    let tile = selectedTile && !selectedTile.classList.contains('placed') ? selectedTile : null;
+    if (!tile) tile = [...tray.querySelectorAll('.tile:not(.placed)')].find(t => !t.hidden) || tray.querySelector('.tile:not(.placed)');
+    if (!tile) { setMessage('没有剩余拼图啦，已经全部完成！', 'good'); return; }
+    if (selectedTile) selectedTile.classList.remove('selected');
+    selectedTile = tile;
+    tile.classList.add('selected');
+    const slot = slotById(tile.dataset.id);
+    if (!slot) return;
+    mapGrid.querySelectorAll('.slot.hinting').forEach(s => s.classList.remove('hinting'));
+    slot.classList.add('hinting');
+    hints += 1; updateStats(); startTimer();
+    setMessage('提示：现在闪烁的位置就是「' + regionById(tile.dataset.id).name + '」应该放置的位置。');
+    window.setTimeout(() => slot.classList.remove('hinting'), 2300);
+  });
+  document.getElementById('resetBtn').addEventListener('click', initGame);
+  initGame();
+})();
+</script>
+</body>
+</html>
